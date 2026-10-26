@@ -1,0 +1,42 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository'ni yuklab olish
+        uses: actions/checkout@v4
+
+      - name: Node.js muhitini o'rnatish
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Bog'liqliklarni (Dependencies) o'rnatish
+        run: npm install
+
+      - name: Java (JDK 17) muhitini o'rnatish
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Capacitor Android loyihasini tayyorlash va APK yig'ish
+        run: |
+          npx cap init --web-dir www --app-id uz.tabiiyfanlar.atomfizikasi --app-name "Atom Fizikasi" || true
+          npx cap add android || true
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Tayyor APK faylini Artifacts'ga yuklash
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomFizikasi-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
